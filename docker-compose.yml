@@ -1,0 +1,127 @@
+version: '3'
+services:
+    db: 
+        image: mysql:8.0.27
+        container_name: mysql8_container
+        restart: always
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+            MYSQL_DATABASE: chats_system
+        volumes:
+            - ./mysql:/var/lib/mysql
+        command: '--default-authentication-plugin=mysql_native_password'
+        ports:
+            - "3307:3306"
+        networks:
+            - chats-application    
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin8_container
+        depends_on:
+            - db
+        restart: always
+        ports:
+            - "8060:80"
+        environment:
+            - PMA_ARBITRARY=1
+        networks:
+            - chats-application           
+    app: 
+        build: .
+        container_name: app_container
+        command: bash -c "bash ./init.sh && bundle exec rails s -p 3000 -b '0.0.0.0'"
+        volumes: 
+            - ".:/app"
+            - ./tmp-data:/app/tmp/sockets
+            - bundle:/usr/local/bundle:delegated
+        ports: 
+            - "3001:3000"
+        depends_on:
+            - db
+            - redis
+        links:
+            - db
+            - redis
+            - rabbitmq
+            - es01
+        environment:
+            DB_USER: root
+            DB_NAME: chats_system
+            DB_HOST: db
+            REDIS_HOST: redis
+            RABBITMQ_HOST: rabbitmq
+            ES_HOST: es01
+        networks:
+            - chats-application    
+    redis:
+        image: redis:alpine
+        container_name: redis_container
+        restart: always
+        volumes:
+            - ./redis-data:/data
+        networks:
+            - chats-application    
+    rabbitmq:
+        image: rabbitmq:3.10.7-management-alpine
+        container_name: rabbitmq_container
+        restart: always
+        ports:
+            - 5672:5672
+            - 15672:15672
+        volumes:
+            - ./rabbitmq:/var/lib/rabbitmq
+        networks:
+            - chats-application    
+    worker:
+        build: .
+        container_name: worker_container
+        command: rake sneakers:run
+        restart: always
+        volumes:
+            - .:/app
+        links:
+            - db
+            - redis
+            - rabbitmq
+            - es01
+        depends_on:
+            - app
+        environment:
+            - WORKERS=ChatsWorker,MessagesWorker
+            - DB_HOST=db
+            - REDIS_HOST=redis
+            - RABBITMQ_HOST=rabbitmq
+            - ES_HOST=es01
+        networks:
+            - chats-application
+    es01:
+        image: docker.elastic.co/elasticsearch/elasticsearch:5.6.10
+        container_name: es01_container
+        environment:
+            - node.name=es7-node
+            - cluster.name=es-docker-cluster
+            - bootstrap.memory_lock=true
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+            - xpack.security.enabled=false
+            - discovery.type=single-node
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        volumes:
+            - ./elasticsearch:/var/lib/elasticsearch/elasticsearch/data
+        ports:
+            - 9200:9200
+        restart: always
+        networks:
+            - chats-application                   
+volumes:
+    mysql:
+    tmp-data:
+    redis:
+    rabbitmq:
+    bundle:
+    elasticsearch:
+networks:
+    chats-application:
+        driver: bridge           
