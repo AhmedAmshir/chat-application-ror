@@ -9,6 +9,7 @@
 - ElasticSearch for searching through messages of a specific chat.
 - RabbitMQ and Sneakers to avoid race conditions.
 - Whenever to create a cronjob for updating chats and messages counts.
+- RSpec as a testing framework 
 
 # How to run the Application
 - Clone the repo
@@ -25,3 +26,9 @@ http://localhost:3001
 ```
 - You can find all endpoints docs here
 [![Run in Postman](https://run.pstmn.io/button.svg)](https://documenter.getpostman.com/view/19109979/2s7YYpfRHq#intro)
+
+- You can run tests by this command from inside the container
+``` sh
+docker exec -it app_container bash
+rspec spec/models/application_spec.rb -f d
+```
