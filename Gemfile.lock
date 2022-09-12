@@ -59,6 +59,7 @@ GEM
     chronic (0.10.2)
     concurrent-ruby (1.1.10)
     crass (1.0.6)
+    diff-lcs (1.5.0)
     dotenv (2.8.1)
     dotenv-rails (2.8.1)
       dotenv (= 2.8.1)
@@ -72,6 +73,13 @@ GEM
       faraday
       multi_json
     erubi (1.11.0)
+    factory_bot (5.2.0)
+      activesupport (>= 4.2.0)
+    factory_bot_rails (5.2.0)
+      factory_bot (~> 5.2.0)
+      railties (>= 4.2.0)
+    faker (2.12.0)
+      i18n (>= 1.6, < 2)
     faraday (1.10.2)
       faraday-em_http (~> 1.0)
       faraday-em_synchrony (~> 1.0)
@@ -156,6 +164,23 @@ GEM
       ffi (~> 1.0)
     rbtree (0.4.5)
     redis (3.3.5)
+    rspec-core (3.11.0)
+      rspec-support (~> 3.11.0)
+    rspec-expectations (3.11.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.11.0)
+    rspec-mocks (3.11.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.11.0)
+    rspec-rails (4.1.2)
+      actionpack (>= 4.2)
+      activesupport (>= 4.2)
+      railties (>= 4.2)
+      rspec-core (~> 3.10)
+      rspec-expectations (~> 3.10)
+      rspec-mocks (~> 3.10)
+      rspec-support (~> 3.10)
+    rspec-support (3.11.0)
     ruby2_keywords (0.0.5)
     ruby2ruby (2.4.4)
       ruby_parser (~> 3.1)
@@ -206,6 +231,8 @@ DEPENDENCIES
   dotenv-rails
   elasticsearch-model!
   elasticsearch-rails!
+  factory_bot_rails
+  faker
   hairtrigger
   listen (~> 3.0.5)
   multi_json
@@ -213,6 +240,7 @@ DEPENDENCIES
   puma (~> 3.0)
   rails (~> 5.1.7)
   redis (~> 3.0)
+  rspec-rails (~> 4.1.0)
   sneakers
   spring
   spring-watcher-listen (~> 2.0.0)

@@ -5,23 +5,35 @@ class Api::MessagesController < ApplicationController
     before_action :set_message, only: [:show, :update, :destroy]
 
     def index
-        @messages = @chat.messages.order("id desc")
-        render json: {
-            status: 200, data: @messages.as_json(only: [:number, :body, :created_at])
-        }, status: :ok
+        if @chat.present?
+            @messages = @chat.messages.order("id desc")
+            render json: {
+                status: 200, data: @messages.as_json(only: [:number, :body, :created_at])
+            }, status: :ok
+        else
+            render json: {status: 422, error: {message: ErrorController.invalid_chat_number()}}, status: :unprocessable_entity
+        end
     end
 
     def create
-        @message = @chat.messages.build(message_params)
+        if @chat.present?
+            if params.has_key?(:body)
+                @message = @chat.messages.build(message_params)
 
-        if @message.valid?
-            @message.number = get_message_number
-        
-            PublishService.publish("messages", @message)
-            render json: {status: 201, data: {message_number: @message.number}}, status: :created
-            
+                if @message.valid?
+                    @message.number = get_message_number
+                
+                    PublishService.publish("messages", @message)
+                    render json: {status: 201, data: {message_number: @message.number}}, status: :created
+                    
+                else
+                    render json: {status: 400, error: @message.errors}, status: :bad_request
+                end
+            else
+                render json: {status: 400, error: ['Thq `body` param is required.']}, status: :bad_request
+            end
         else
-            render json: {status: 400, error: @message.errors}, status: :bad_request
+            render json: {status: 422, error: {message: ErrorController.invalid_chat_number()}}, status: :unprocessable_entity
         end
     end
 
@@ -36,11 +48,19 @@ class Api::MessagesController < ApplicationController
     end
 
     def update
-        if @message.update_attributes(message_params)
+        if params.has_key?(:body)
+            if @message.present?
+                if @message.update_attributes(message_params)
 
-            render json: {status: 200, data: @message.as_json(only: [:number, :body])}, status: :ok
+                    render json: {status: 200, data: @message.as_json(only: [:number, :body])}, status: :ok
+                else
+                    render json: {status: 422, error: @message.errors}, status: :unprocessable_entity
+                end
+            else
+                render json: {status: 204, data: []}, status: :no_content
+            end
         else
-            render json: {status: 422, error: @message.error}, status: :unprocessable_entity
+            render json: {status: 400, error: ['Thq `body` param is required.']}, status: :bad_request
         end
     end
 
@@ -85,11 +105,11 @@ class Api::MessagesController < ApplicationController
         end
 
         def set_chat
-            @chat = @application.chats.find_by(number: params[:number])
+            @chat = @application.present? ? @application.chats.find_by(number: params[:number]) : []
         end
 
         def set_message
-            @message = @chat.messages.find_by(number: params[:msg_number])
+            @message = @chat.present? ? @chat.messages.find_by(number: params[:msg_number]) : []
         end
 
         def get_message_number

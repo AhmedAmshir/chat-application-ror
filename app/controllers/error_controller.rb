@@ -1,7 +1,7 @@
 class ErrorController < ApplicationController
 
-    def self.invalid_token(token)
-        return "Error: invalid token sent " +  token
+    def self.invalid_token()
+        return "Error: invalid application token"
     end
 
     def self.invalid_chat_number()

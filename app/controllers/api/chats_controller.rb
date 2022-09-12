@@ -4,32 +4,44 @@ class Api::ChatsController < ApplicationController
     before_action :set_chat, only: [:show, :update, :destroy]
 
     def index
-        @chats = @application.chats.order("id desc")
-        render json: {
-            status: 200, data: @chats.as_json(
-            only: [:number, :messages_count, :created_at],
-            :include => {:messages => {only: [:number, :body, :created_at]}})
-        }, status: :ok
+        if @application.present?
+            @chats = @application.chats.order("id desc")
+            render json: {
+                status: 200, data: @chats.as_json(
+                only: [:number, :messages_count, :created_at],
+                :include => {:messages => {only: [:number, :body, :created_at]}})
+            }, status: :ok
+        else
+            render json: {status: 422, error: {message: ErrorController.invalid_token()}}, status: :unprocessable_entity
+        end
     end
 
     def create
-        @chat = @application.chats.build
-        @chat.number = get_chat_number
-        if @chat.valid?
-            PublishService.publish("chats", @chat)
-            render json: {status: 201, data: @chat.as_json(only: [:number])}, status: :created
+        if @application.present?
+            @chat = @application.chats.build
+            @chat.number = get_chat_number
+            if @chat.valid?
+                PublishService.publish("chats", @chat)
+                render json: {status: 201, data: @chat.as_json(only: [:number])}, status: :created
+            else
+                render json: {status: 422, error: @chat.error}, status: :unprocessable_entity
+            end
         else
-            render json: {status: 422, error: @chat.error}, status: :unprocessable_entity
+            render json: {status: 422, error: {message: ErrorController.invalid_token()}}, status: :unprocessable_entity
         end
     end
 
     def destroy
 
-        if @chat.present?
-            @chat.destroy
-            render json: {status: 200, data: {message: "Deleted Successfully chat #" + @chat.number.to_s + " on application #" + @application.token.to_s}}, status: :ok
+        if @application.present?
+            if @chat.present?
+                @chat.destroy
+                render json: {status: 200, data: {message: "Deleted Successfully chat #" + @chat.number.to_s + " on application #" + @application.token.to_s}}, status: :ok
+            else
+                render json: {status: 422, error: {message: ErrorController.invalid_chat_number()}}, status: :unprocessable_entity
+            end
         else
-            render json: {status: 422, error: {message: ErrorController.invalid_chat_number()}}, status: :unprocessable_entity
+            render json: {status: 422, error: {message: ErrorController.invalid_token()}}, status: :unprocessable_entity
         end
     end
 
@@ -40,7 +52,7 @@ class Api::ChatsController < ApplicationController
         end
 
         def set_chat
-            @chat = @application.chats.find_by(number: params[:number])
+            @chat = (@application.present?) ? @application.chats.find_by(number: params[:number]) : []
         end
 
         def get_chat_number

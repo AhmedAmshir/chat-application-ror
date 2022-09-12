@@ -26,12 +26,16 @@ class Api::ApplicationsController < ApplicationController
     end
 
     def create
-        @application = Application.new({name: application_params[:name], token: Application.new.create_token})
-        if @application.save!
+        if params.has_key?(:name)
+            @application = Application.new({name: application_params[:name], token: Application.new.create_token})
+            if @application.save
 
-            render json: {status: 201, data: @application.as_json(only: [:token])}, status: :created
+                render json: {status: 201, data: @application.as_json(only: [:token])}, status: :created
+            else
+                render json: {status: 422, error: @application.errors}, status: :unprocessable_entity
+            end
         else
-            render json: {status: 422, error: @application.error}, status: :unprocessable_entity
+            render json: {status: 400, error: ['Thq `name` param is required.']}, status: :bad_request
         end
     end
 
@@ -53,7 +57,7 @@ class Api::ApplicationsController < ApplicationController
             @application.destroy
             render json: {status: 200, data: {message: "Deleted Successfully #" +  params[:token].to_s}}, status: :ok
         else
-            render json: {status: 422, error: {message: ErrorController.invalid_token(params[:token].to_s)}}, status: :unprocessable_entity
+            render json: {status: 422, error: {message: ErrorController.invalid_token()}}, status: :unprocessable_entity
         end
     end
 
@@ -64,6 +68,6 @@ class Api::ApplicationsController < ApplicationController
         end
 
         def application_params
-            params.require(:application).permit(:name)
+            params.permit(:name)
         end
 end

@@ -23,5 +23,5 @@ docker-compose up -d --build
 ``` sh
 http://localhost:3001
 ```
-- You can find all endpoints docs here >>
+- You can find all endpoints docs here
 [![Run in Postman](https://run.pstmn.io/button.svg)](https://documenter.getpostman.com/view/19109979/2s7YYpfRHq#intro)
